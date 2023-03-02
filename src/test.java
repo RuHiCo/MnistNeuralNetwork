@@ -3,8 +3,8 @@ import java.io.IOException;
 public class test {
     public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
         int size = 10000;
-        double[][][] pictures = Reader.readPicture("source\\t10k-images-idx3-ubyte\\t10k-images.idx3-ubyte", size);
-        int[] labels = Reader.readLabels("source\\t10k-labels-idx1-ubyte\\t10k-labels.idx1-ubyte", size);
+        double[][] pictures = Reader.readPicture("source\\t10k-images.idx3-ubyte", size);
+        int[] labels = Reader.readLabels("source\\t10k-labels.idx1-ubyte", size);
         Net net = new Net();
         net.importWeight();
         /*for (int i=0;i<5;i++){

@@ -27,8 +27,8 @@ public class main {
             numbers = swap(numbers, i, swapInt);
         }
 
-        double[][][] pictures = Reader.readPicture("source\\train-images-idx3-ubyte\\train-images.idx3-ubyte", size);
-        int[] labels = Reader.readLabels("source\\train-labels-idx1-ubyte\\train-labels.idx1-ubyte", size);
+        double[][] pictures = Reader.readPicture("source\\train-images.idx3-ubyte", size);
+        int[] labels = Reader.readLabels("source\\train-labels.idx1-ubyte", size);
         Net net = new Net();
         net.importWeight();
         int count = 0;
@@ -49,14 +49,14 @@ public class main {
     }
 
     public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
-        boolean initialize=false;
+        boolean initialize=true;
         if(initialize) {
-            initializeWeights(123,35);
+            initializeWeights(90,30);
         }
         double alpha=0;
-        for (int j = 0; j < 10; j++) {
+        for (int j = 0; j < 11; j++) {
             System.out.println(j+1);
-            alpha=0.3-j*0.03;
+            alpha=0.4-j*0.035;
             train(alpha);
         }
     }
