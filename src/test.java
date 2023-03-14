@@ -1,7 +1,7 @@
 import java.io.IOException;
 
 public class test {
-    public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
+    public static double main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
         int size = 10000;
         double[][][] pictures = Reader.readPicture("source\\t10k-images-idx3-ubyte\\t10k-images.idx3-ubyte", size);
         int[] labels = Reader.readLabels("source\\t10k-labels-idx1-ubyte\\t10k-labels.idx1-ubyte", size);
@@ -33,8 +33,10 @@ public class test {
             }
             System.out.println();
         }
-        System.out.println(count);
+        double res=(10000-count)/10000.0;
+        System.out.printf("%.3f Prozent Trefferquote auf dem Testdatensatz",res);
         //net.exportWeight();
         //System.out.print("finish\n");
+        return res;
     }
 }

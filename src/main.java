@@ -1,3 +1,4 @@
+import javax.swing.*;
 import java.io.IOException;
 import java.util.Random;
 
@@ -31,6 +32,8 @@ public class main {
         int[] labels = Reader.readLabels("source\\train-labels-idx1-ubyte\\train-labels.idx1-ubyte", size);
         Net net = new Net();
         net.importWeight();
+        net.nextGeneration();
+        System.out.printf("Generation: %d\n",net.getGeneration());
         int count = 0;
         int count2 = 0;
         for (int i : numbers) {
@@ -42,22 +45,34 @@ public class main {
                 System.out.printf("%d zu Ende\n",count2);
             }
         }
-        System.out.println(count);
+        System.out.printf("%.3f Prozent Trefferquote auf dem Trainingsdatensatz",(60000-count)/60000.0);
+        double res=test.main(null);
+        net.appendProgress(Double.toString(res));
         net.exportWeight();
         //System.out.print("finish\n");
-        test.main(null);
+
     }
 
     public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
-        boolean initialize=false;
+        boolean initialize=true;
         if(initialize) {
             initializeWeights(123,35);
         }
         double alpha=0;
-        for (int j = 0; j < 10; j++) {
-            System.out.println(j+1);
-            alpha=0.3-j*0.03;
+        for (int j = 0; j < 20; j++) {
+            //System.out.println(j+1);
+            alpha=0.05-j*0.0025;
             train(alpha);
         }
+        Net net=new Net();
+        net.importWeight();
+        //create an instance of JFrame class
+        JFrame frame = new JFrame();
+        // set size, layout and location for frame.
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.add(new PlotProgress(net.getProgress()));
+        frame.setSize(400, 400);
+        frame.setLocation(200, 200);
+        frame.setVisible(true);
     }
 }

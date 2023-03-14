@@ -3,7 +3,9 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 public class Net {
 
@@ -11,20 +13,42 @@ public class Net {
     private double[][] weightInputHidden;
     private double[][] weightHiddenHidden;
     private double[][] weightHiddenOutput;
+    private int generation;
+    private ArrayList<String> progress=new ArrayList<>();
     private double[][] layerInput;
     private double[][] layerHidden1;
     private double[][] layerHidden2;
     private double[][] layerOutput;
 
 
-    public Net(){
-        //this.importWeight();
+    public Net() {
+        this.appendProgress("initial");
+    }
+
+    public void nextGeneration() {
+        this.generation += 1;
+    }
+
+    public int getGeneration() {
+        return this.generation;
+    }
+
+    public void appendProgress(String element){
+        this.progress.add(element);
+    }
+
+    public double[] getProgress(){
+        double[] erg=new double[this.progress.size()];
+        for(int i=0;i<this.progress.size();i++){
+            erg[i]=Double.parseDouble(this.progress.get(i));
+        }
+        return erg;
     }
 
     public static void getImageFromArray(int[] pixels, int width, int height) throws InterruptedException {
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         WritableRaster raster = (WritableRaster) image.getData();
-        raster.setPixels(0,0,width,height,pixels);
+        raster.setPixels(0, 0, width, height, pixels);
         JFrame frame = new JFrame();
         frame.getContentPane().setLayout(new FlowLayout());
         frame.getContentPane().add(new JLabel(new ImageIcon(image)));
@@ -32,38 +56,42 @@ public class Net {
         frame.setVisible(true);
         java.util.concurrent.TimeUnit.SECONDS.sleep(2);
     }
-    public void printweights(){
+
+    public void printweights() {
         Matrix.print(this.weightInputHidden);
         Matrix.print(this.weightHiddenHidden);
         Matrix.print(this.weightHiddenOutput);
     }
 
-    public void newPicture(double[][] picture,int label) {
+    public void newPicture(double[][] picture, int label) {
         this.layerInput = picture;
         this.label = label;
     }
 
-    public void createWeight(int start, int size1, int size2, int end ) {
-        Random rd=new Random();
+    public void createWeight(int start, int size1, int size2, int end) {
+        Random rd = new Random();
         rd.setSeed(System.currentTimeMillis());
-        this.weightInputHidden =new double[size1][start];
-        for (int i = 0; i< weightInputHidden.length; i++) {
+        this.weightInputHidden = new double[size1][start];
+        for (int i = 0; i < weightInputHidden.length; i++) {
             for (int j = 0; j < weightInputHidden[0].length; j++) {
-                this.weightInputHidden[i][j] = rd.nextDouble() * 0.05+0.001;
+                this.weightInputHidden[i][j] = rd.nextDouble() * 0.05 + 0.001;
             }
         }
-        this.weightHiddenHidden =new double[size2][size1];
-        for (int i = 0; i< weightHiddenHidden.length; i++) {
+        this.weightHiddenHidden = new double[size2][size1];
+        for (int i = 0; i < weightHiddenHidden.length; i++) {
             for (int j = 0; j < weightHiddenHidden[0].length; j++) {
-                this.weightHiddenHidden[i][j] = rd.nextDouble() * 0.07+0.001;
+                this.weightHiddenHidden[i][j] = rd.nextDouble() * 0.07 + 0.001;
             }
         }
-        this.weightHiddenOutput =new double[end][size2];
-        for (int i = 0; i< weightHiddenOutput.length; i++) {
+        this.weightHiddenOutput = new double[end][size2];
+        for (int i = 0; i < weightHiddenOutput.length; i++) {
             for (int j = 0; j < weightHiddenOutput[0].length; j++) {
-                this.weightHiddenOutput[i][j] = rd.nextDouble()*0.09+0.001;
+                this.weightHiddenOutput[i][j] = rd.nextDouble() * 0.09 + 0.001;
             }
         }
+        this.generation = 0;
+        this.progress=new ArrayList<>();
+        this.progress.add("0");
         //Matrix.print(this.weight3);
     }
 
@@ -74,7 +102,13 @@ public class Net {
         outputStream.writeObject(this.weightHiddenHidden);
         outputStream = new ObjectOutputStream(new FileOutputStream("weight3.txt"));
         outputStream.writeObject(this.weightHiddenOutput);
-        //Matrix.print(this.weight3);
+        outputStream = new ObjectOutputStream(new FileOutputStream("generation.txt"));
+        outputStream.writeObject(this.generation);
+        FileWriter writer = new FileWriter("progress.csv");
+        String collect = String.join(",", this.progress);
+        System.out.println(collect);
+        writer.write(collect);
+        writer.close();
     }
 
     public void importWeight() throws IOException, ClassNotFoundException {
@@ -85,23 +119,33 @@ public class Net {
         this.weightHiddenHidden = (double[][]) inputStream.readObject();
         inputStream = new ObjectInputStream(new FileInputStream("weight3.txt"));
         this.weightHiddenOutput = (double[][]) inputStream.readObject();
+        inputStream = new ObjectInputStream(new FileInputStream("generation.txt"));
+        this.generation = (int) inputStream.readObject();
+        BufferedReader userlines = new BufferedReader(new FileReader("progress.csv"));
+        String res= userlines.readLine();
+        String[] results=res.split(",");
+        this.progress=new ArrayList<>();
+        for (String r:results){
+            this.appendProgress(r);
+        }
+        System.out.println(this.progress);
         //Matrix.print(this.weight1);
         //Matrix.print(this.weight2);
         //Matrix.print(this.weight3);
     }
 
     public static double sigmoid(double x) {
-        return 1 / (1 + Math.pow(Math.E,-x));
+        return 1 / (1 + Math.pow(Math.E, -x));
     }
 
     public static double[][] sigmoidForVector(double[][] layer) {
-        for(int i=0;i<layer.length;i++) {
+        for (int i = 0; i < layer.length; i++) {
             layer[i][0] = Net.sigmoid(layer[i][0]);
         }
         return layer;
     }
 
-    public void calculate(){
+    public void calculate() {
         //double[][] x=Matrix.multiply(this.weight1, this.layerStart);
         //Matrix.print(x);
         this.layerHidden1 = this.sigmoidForVector(Matrix.multiply(this.weightInputHidden, this.layerInput));
@@ -115,23 +159,23 @@ public class Net {
 
     }
 
-    public int getResults(int count,int[][] haelt1fuer2) throws InterruptedException {
+    public int getResults(int count, int[][] haelt1fuer2) throws InterruptedException {
         double[][] error = new double[10][1];
         error[this.label][0] = 1.0;
-        double sum2=0;
-        for(int i=0;i<10;i++) {
+        double sum2 = 0;
+        for (int i = 0; i < 10; i++) {
             error[i][0] = (error[i][0] - this.layerOutput[i][0]);
-            sum2+=error[i][0]*error[i][0];
+            sum2 += error[i][0] * error[i][0];
         }
         //if(numb%100==0) {
         //Matrix.print(error);
         //}
         //System.out.println(sum2);
-        double actual=this.layerOutput[this.label][0];
+        double actual = this.layerOutput[this.label][0];
         for (int i = 0; i < this.layerOutput.length; i++) {
             if (actual < this.layerOutput[i][0]) {
                 count += 1;
-                haelt1fuer2[this.label][i]+=1;
+                haelt1fuer2[this.label][i] += 1;
                 //System.out.println(this.label+" but recognised "+i);
                 //int[] pixels=new int[784];
                 /*for(int k=0;k<784;k++){
@@ -146,28 +190,29 @@ public class Net {
                 break;
             }
         }
-        haelt1fuer2[this.label][this.label]+=1;
+        haelt1fuer2[this.label][this.label] += 1;
 
         /*if(numb%7==0) {
             System.out.println(sum2);
         }*/
         return count;
     }
-    public int compareResult(int count,double alpha) {
+
+    public int compareResult(int count, double alpha) {
         double[][] error = new double[10][1];
         error[this.label][0] = 1.0;
-        double sum2=0;
-        for(int i=0;i<10;i++) {
+        double sum2 = 0;
+        for (int i = 0; i < 10; i++) {
             error[i][0] = (error[i][0] - this.layerOutput[i][0]);
-            sum2+=error[i][0]*error[i][0];
+            sum2 += error[i][0] * error[i][0];
         }
         //if(numb%100==0) {
         //Matrix.print(error);
         //}
         //System.out.println(sum2);
-        double actual=this.layerOutput[this.label][0];
+        double actual = this.layerOutput[this.label][0];
         for (double[] end : layerOutput) {
-            if(actual<end[0]){
+            if (actual < end[0]) {
                 count += 1;
                 break;
             }
@@ -177,10 +222,11 @@ public class Net {
             System.out.println(sum2);
         }*/
 
-        this.adjustWeights(error,alpha);
+        this.adjustWeights(error, alpha);
         return count;
     }
-    public void adjustWeights(double[][] error,double alpha) {
+
+    public void adjustWeights(double[][] error, double alpha) {
         //double alpha = 0.14;
 
         double[][] sigmoidDervivative3 = new double[10][1];
@@ -220,5 +266,9 @@ public class Net {
         this.weightHiddenOutput = Matrix.add(weightHiddenOutput, delta3);
         this.weightHiddenHidden = Matrix.add(weightHiddenHidden, delta2);
         this.weightInputHidden = Matrix.add(weightInputHidden, delta1);
+    }
+
+    public void showProgress(){
+
     }
 }
