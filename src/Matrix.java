@@ -62,6 +62,32 @@ public class Matrix {
         return erg;
     }
 
+    public static double[] multiplyWithVector(double[][] matrix1,double[] vector) {
+        if (matrix1[0].length != vector.length) {
+            return null;
+            //throw Exception ('Not the correct dimension');
+        }
+        double[] erg = new double[matrix1.length];
+        for (int i = 0; i < matrix1.length; i++) {
+            double zwerg = 0;
+            for (int k = 0; k < matrix1[0].length; k++) {
+                zwerg += matrix1[i][k] * vector[k];
+            }
+            erg[i] = zwerg;
+        }
+        return erg;
+    }
+
+    public static double[][] multiplyVectors(double[] matrix1,double[] matrix2) {
+        double[][] erg = new double[matrix1.length][matrix2.length];
+        for (int j = 0; j < matrix2.length; j++) {
+            for (int i = 0; i < matrix1.length; i++) {
+                erg[i][j] = matrix1[i] * matrix2[j];
+            }
+        }
+        return erg;
+    }
+
     public static double[][] transpose(double[][] matrix1) {
         double[][] erg = new double[matrix1[0].length][matrix1.length];
         for (int i = 0; i < matrix1.length; i++) {
@@ -71,4 +97,5 @@ public class Matrix {
         }
         return erg;
     }
+
 }

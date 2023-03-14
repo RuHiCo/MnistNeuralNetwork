@@ -5,7 +5,6 @@ import java.awt.image.WritableRaster;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Random;
-import java.util.stream.Collectors;
 
 public class Net {
 
@@ -15,10 +14,10 @@ public class Net {
     private double[][] weightHiddenOutput;
     private int generation;
     private ArrayList<String> progress=new ArrayList<>();
-    private double[][] layerInput;
-    private double[][] layerHidden1;
-    private double[][] layerHidden2;
-    private double[][] layerOutput;
+    private double[] layerInput;
+    private double[] layerHidden1;
+    private double[] layerHidden2;
+    private double[] layerOutput;
 
 
     public Net() {
@@ -63,7 +62,7 @@ public class Net {
         Matrix.print(this.weightHiddenOutput);
     }
 
-    public void newPicture(double[][] picture, int label) {
+    public void newPicture(double[] picture, int label) {
         this.layerInput = picture;
         this.label = label;
     }
@@ -92,7 +91,6 @@ public class Net {
         this.generation = 0;
         this.progress=new ArrayList<>();
         this.progress.add("0");
-        //Matrix.print(this.weight3);
     }
 
     public void exportWeight() throws IOException {
@@ -128,147 +126,98 @@ public class Net {
         for (String r:results){
             this.appendProgress(r);
         }
-        System.out.println(this.progress);
-        //Matrix.print(this.weight1);
-        //Matrix.print(this.weight2);
-        //Matrix.print(this.weight3);
     }
 
     public static double sigmoid(double x) {
         return 1 / (1 + Math.pow(Math.E, -x));
     }
 
-    public static double[][] sigmoidForVector(double[][] layer) {
+    public static double[] sigmoidForVector(double[] layer) {
         for (int i = 0; i < layer.length; i++) {
-            layer[i][0] = Net.sigmoid(layer[i][0]);
+            layer[i] = Net.sigmoid(layer[i]);
         }
         return layer;
     }
 
     public void calculate() {
-        //double[][] x=Matrix.multiply(this.weight1, this.layerStart);
-        //Matrix.print(x);
-        this.layerHidden1 = this.sigmoidForVector(Matrix.multiply(this.weightInputHidden, this.layerInput));
-        //double[][] y=Matrix.multiply(this.weight2, this.layer1);
-        //Matrix.print(y);
-        //Matrix.print(this.layer1);
-        this.layerHidden2 = this.sigmoidForVector(Matrix.multiply(this.weightHiddenHidden, this.layerHidden1));
-        //Matrix.print(this.layer2);
-        this.layerOutput = this.sigmoidForVector(Matrix.multiply(this.weightHiddenOutput, this.layerHidden2));
-        //Matrix.print(this.layerEnd);
-
+        this.layerHidden1 = this.sigmoidForVector(Matrix.multiplyWithVector(this.weightInputHidden, this.layerInput));
+        this.layerHidden2 = this.sigmoidForVector(Matrix.multiplyWithVector(this.weightHiddenHidden, this.layerHidden1));
+        this.layerOutput = this.sigmoidForVector(Matrix.multiplyWithVector(this.weightHiddenOutput, this.layerHidden2));
     }
 
-    public int getResults(int count, int[][] haelt1fuer2) throws InterruptedException {
+    public void getResults(double[] results, int[][] haelt1fuer2){
         double[][] error = new double[10][1];
         error[this.label][0] = 1.0;
         double sum2 = 0;
         for (int i = 0; i < 10; i++) {
-            error[i][0] = (error[i][0] - this.layerOutput[i][0]);
-            sum2 += error[i][0] * error[i][0];
+            error[i][0] = (error[i][0] - this.layerOutput[i]);
+            results[1] += error[i][0] * error[i][0];
         }
-        //if(numb%100==0) {
-        //Matrix.print(error);
-        //}
-        //System.out.println(sum2);
-        double actual = this.layerOutput[this.label][0];
+        double actual = this.layerOutput[this.label];
         for (int i = 0; i < this.layerOutput.length; i++) {
-            if (actual < this.layerOutput[i][0]) {
-                count += 1;
+            if (actual < this.layerOutput[i]) {
+                results[0] += 1;
                 haelt1fuer2[this.label][i] += 1;
-                //System.out.println(this.label+" but recognised "+i);
-                //int[] pixels=new int[784];
-                /*for(int k=0;k<784;k++){
-                //pixels[k]=(int)this.layerStart[k][0]*255;
-                    System.out.printf("%.0f\t",this.layerInput[k][0]*255);
-                    if((k+1)%28==0){
-                        System.out.println();
-                    }
-                }*/
-                //getImageFromArray(pixels,20,20);
-                //System.out.println();
                 break;
             }
         }
         haelt1fuer2[this.label][this.label] += 1;
-
-        /*if(numb%7==0) {
-            System.out.println(sum2);
-        }*/
-        return count;
     }
 
     public int compareResult(int count, double alpha) {
-        double[][] error = new double[10][1];
-        error[this.label][0] = 1.0;
+        double[] error = new double[10];
+        error[this.label] = 1.0;
         double sum2 = 0;
         for (int i = 0; i < 10; i++) {
-            error[i][0] = (error[i][0] - this.layerOutput[i][0]);
-            sum2 += error[i][0] * error[i][0];
+            error[i] = (error[i] - this.layerOutput[i]);
+            sum2 += error[i] * error[i];
         }
-        //if(numb%100==0) {
-        //Matrix.print(error);
-        //}
-        //System.out.println(sum2);
-        double actual = this.layerOutput[this.label][0];
-        for (double[] end : layerOutput) {
-            if (actual < end[0]) {
+        double actual = this.layerOutput[this.label];
+        for (double end : layerOutput) {
+            if (actual < end) {
                 count += 1;
                 break;
             }
         }
-
-        /*if(numb%7==0) {
-            System.out.println(sum2);
-        }*/
-
         this.adjustWeights(error, alpha);
         return count;
     }
 
-    public void adjustWeights(double[][] error, double alpha) {
-        //double alpha = 0.14;
-
-        double[][] sigmoidDervivative3 = new double[10][1];
+    public void adjustWeights(double[] error, double alpha) {
+        double[] sigmoidDervivative3 = new double[10];
         for (int i = 0; i < this.weightHiddenOutput.length; i++) {
-            sigmoidDervivative3[i][0] = this.layerOutput[i][0] * (1 - this.layerOutput[i][0]) * error[i][0];
+            sigmoidDervivative3[i] = this.layerOutput[i] * (1 - this.layerOutput[i]) * error[i];
         }
-        double[][] delta3 = Matrix.multiply(sigmoidDervivative3, Matrix.transpose(this.layerHidden2));
+        double[][] delta3 = Matrix.multiplyVectors(sigmoidDervivative3, this.layerHidden2);
         delta3 = Matrix.multiplyEachBy(delta3, alpha);
-
-        double[][] sigmoidDerivative2 = new double[this.weightHiddenHidden.length][1];
+        double[] sigmoidDerivative2 = new double[this.weightHiddenHidden.length];
         double[] sums = new double[this.weightHiddenOutput[0].length];
         for (int j = 0; j < this.weightHiddenOutput[0].length; j++) {
             double sum = 0;
             for (int i = 0; i < this.weightHiddenOutput.length; i++) {
-                sum += this.weightHiddenOutput[i][j] * sigmoidDervivative3[i][0];
+                sum += this.weightHiddenOutput[i][j] * sigmoidDervivative3[i];
             }
             sums[j] = sum;
-            sigmoidDerivative2[j][0] = this.layerHidden2[j][0] * (1 - this.layerHidden2[j][0]) * sum;
+            sigmoidDerivative2[j] = this.layerHidden2[j] * (1 - this.layerHidden2[j]) * sum;
         }
 
-        double[][] delta2 = Matrix.multiply(sigmoidDerivative2, Matrix.transpose(this.layerHidden1));
+        double[][] delta2 = Matrix.multiplyVectors(sigmoidDerivative2, this.layerHidden1);
         delta2 = Matrix.multiplyEachBy(delta2, alpha);
-
-        double[][] sigmoidDerivative1 = new double[this.weightInputHidden.length][1];
+        double[] sigmoidDerivative1 = new double[this.weightInputHidden.length];
         double[] sums1 = new double[this.weightHiddenHidden[0].length];
         for (int j = 0; j < this.weightHiddenHidden[0].length; j++) {
             double sum = 0;
             for (int i = 0; i < this.weightHiddenHidden.length; i++) {
-                sum += this.weightHiddenHidden[i][j] * sigmoidDerivative2[i][0];
+                sum += this.weightHiddenHidden[i][j] * sigmoidDerivative2[i];
             }
             sums1[j] = sum;
-            sigmoidDerivative1[j][0] = this.layerHidden1[j][0] * (1 - this.layerHidden1[j][0]) * sum;
+            sigmoidDerivative1[j] = this.layerHidden1[j] * (1 - this.layerHidden1[j]) * sum;
         }
-        double[][] delta1 = Matrix.multiply(sigmoidDerivative1, Matrix.transpose(this.layerInput));
+        double[][] delta1 = Matrix.multiplyVectors(sigmoidDerivative1, this.layerInput);
         delta1 = Matrix.multiplyEachBy(delta1, alpha);
 
         this.weightHiddenOutput = Matrix.add(weightHiddenOutput, delta3);
         this.weightHiddenHidden = Matrix.add(weightHiddenHidden, delta2);
         this.weightInputHidden = Matrix.add(weightInputHidden, delta1);
-    }
-
-    public void showProgress(){
-
     }
 }

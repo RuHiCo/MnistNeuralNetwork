@@ -8,8 +8,8 @@ public class Reader {
 
     }
 
-    public static double[][][] readPicture(String path, int numPict) throws IOException {
-        double[][][] pictures = new double[numPict][784][1];
+    public static double[][] readPicture(String path, int numPict) throws IOException {
+        double[][] pictures = new double[numPict][784];
         File file = new File(path);
         long size = file.length();
         byte[] contents = new byte[(int) size];
@@ -22,7 +22,7 @@ public class Reader {
                 if (x < 0) {
                     x = (x * (0 - 1)) + 128;
                 }
-                pictures[i][j][0] = x / 255.0;
+                pictures[i][j] = x / 255.0;
                 //System.out.print(x + "\t");
                 //if ((j+1)%28==0){
                 //    System.out.println();
